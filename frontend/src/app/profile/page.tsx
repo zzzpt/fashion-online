@@ -5,6 +5,8 @@ import { Settings, Grid3X3, Heart, ChevronRight } from "lucide-react";
 import { TopBar } from "@/components/layout/TopBar";
 import { Separator } from "@/components/ui/separator";
 import { Button } from "@/components/ui/button";
+import { UserStats } from "@/components/profile/UserStats";
+import { LoadingSpinner } from "@/components/shared/LoadingSpinner";
 import { useAuthStore } from "@/stores/authStore";
 import { api } from "@/lib/api";
 import { toast } from "sonner";
@@ -17,39 +19,39 @@ const menuItems = [
   { icon: Settings, label: "设置", href: "/profile/settings" },
 ];
 
-interface ProfileData {
-  id: string;
-  nickname: string | null;
-  avatar_url: string | null;
-  gender: string;
-  city: string | null;
-  style_tags: string[];
-}
-
-interface StatsData {
-  clothing_count: number;
-  look_count: number;
-  total_likes: number;
-}
-
 export default function ProfilePage() {
   const router = useRouter();
   const { user, signOut } = useAuthStore();
-  const [profile, setProfile] = useState<ProfileData | null>(null);
-  const [stats, setStats] = useState<StatsData>({ clothing_count: 0, look_count: 0, total_likes: 0 });
+  const [nickname, setNickname] = useState<string>("");
+  const [stats, setStats] = useState([
+    { label: "衣物", value: "0" },
+    { label: "搭配", value: "0" },
+    { label: "点赞", value: "0" },
+  ]);
+  const [isLoading, setIsLoading] = useState(true);
 
   const fetchData = useCallback(async () => {
     try {
-      const [p, s] = await Promise.all([
-        api.get("api/users/me").json<ProfileData>(),
-        api.get("api/users/me/stats").json<StatsData>(),
+      const [profile, s] = await Promise.all([
+        api.get("api/users/me").json<{ nickname: string | null }>(),
+        api.get("api/users/me/stats").json<{ clothing_count: number; look_count: number; total_likes: number }>(),
       ]);
-      setProfile(p);
-      setStats(s);
+      setNickname(profile.nickname || user?.user_metadata?.nickname || "时尚达人");
+      setStats([
+        { label: "衣物", value: String(s.clothing_count) },
+        { label: "搭配", value: String(s.look_count) },
+        { label: "点赞", value: String(s.total_likes) },
+      ]);
     } catch {
-      // 未登录或无数据
+      setStats([
+        { label: "衣物", value: "0" },
+        { label: "搭配", value: "0" },
+        { label: "点赞", value: "0" },
+      ]);
+    } finally {
+      setIsLoading(false);
     }
-  }, []);
+  }, [user]);
 
   useEffect(() => {
     if (user) fetchData();
@@ -61,7 +63,14 @@ export default function ProfilePage() {
     router.push("/");
   }
 
-  const displayName = profile?.nickname || user?.user_metadata?.nickname || "时尚达人";
+  if (isLoading) {
+    return (
+      <div className="mx-auto max-w-lg">
+        <TopBar title="我的" />
+        <LoadingSpinner />
+      </div>
+    );
+  }
 
   return (
     <div className="mx-auto max-w-lg">
@@ -73,27 +82,13 @@ export default function ProfilePage() {
             <span className="text-2xl">🌸</span>
           </div>
           <div className="flex-1">
-            <p className="text-lg font-semibold text-gray-800">{displayName}</p>
+            <p className="text-lg font-semibold text-gray-800">{nickname}</p>
             <p className="text-xs text-gray-400 mt-0.5">查看并编辑个人资料</p>
           </div>
           <ChevronRight className="h-4 w-4 text-gray-300" />
         </Link>
 
-        <div className="grid grid-cols-3 gap-4 mb-8">
-          {[
-            { label: "衣物", value: String(stats.clothing_count) },
-            { label: "搭配", value: String(stats.look_count) },
-            { label: "点赞", value: String(stats.total_likes) },
-          ].map((stat) => (
-            <div
-              key={stat.label}
-              className="text-center py-3 rounded-xl bg-gray-50"
-            >
-              <p className="text-xl font-bold text-gray-700">{stat.value}</p>
-              <p className="text-xs text-gray-400 mt-0.5">{stat.label}</p>
-            </div>
-          ))}
-        </div>
+        <UserStats stats={stats} />
 
         <Separator />
 
