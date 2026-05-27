@@ -1,8 +1,15 @@
+"use client";
+
+import { useCallback, useEffect, useState } from "react";
 import { Settings, Grid3X3, Heart, ChevronRight } from "lucide-react";
 import { TopBar } from "@/components/layout/TopBar";
 import { Separator } from "@/components/ui/separator";
 import { Button } from "@/components/ui/button";
+import { useAuthStore } from "@/stores/authStore";
+import { api } from "@/lib/api";
+import { toast } from "sonner";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 
 const menuItems = [
   { icon: Grid3X3, label: "我的 Looks", href: "/profile/looks" },
@@ -10,30 +17,73 @@ const menuItems = [
   { icon: Settings, label: "设置", href: "/profile/settings" },
 ];
 
+interface ProfileData {
+  id: string;
+  nickname: string | null;
+  avatar_url: string | null;
+  gender: string;
+  city: string | null;
+  style_tags: string[];
+}
+
+interface StatsData {
+  clothing_count: number;
+  look_count: number;
+  total_likes: number;
+}
+
 export default function ProfilePage() {
+  const router = useRouter();
+  const { user, signOut } = useAuthStore();
+  const [profile, setProfile] = useState<ProfileData | null>(null);
+  const [stats, setStats] = useState<StatsData>({ clothing_count: 0, look_count: 0, total_likes: 0 });
+
+  const fetchData = useCallback(async () => {
+    try {
+      const [p, s] = await Promise.all([
+        api.get("api/users/me").json<ProfileData>(),
+        api.get("api/users/me/stats").json<StatsData>(),
+      ]);
+      setProfile(p);
+      setStats(s);
+    } catch {
+      // 未登录或无数据
+    }
+  }, []);
+
+  useEffect(() => {
+    if (user) fetchData();
+  }, [user, fetchData]);
+
+  async function handleLogout() {
+    await signOut();
+    toast.success("已退出登录");
+    router.push("/");
+  }
+
+  const displayName = profile?.nickname || user?.user_metadata?.nickname || "时尚达人";
+
   return (
     <div className="mx-auto max-w-lg">
       <TopBar title="我的" />
 
       <div className="px-4 pt-6">
-        {/* 用户信息区域 */}
-        <div className="flex items-center gap-4 mb-8">
+        <Link href="/profile/settings" className="flex items-center gap-4 mb-8">
           <div className="h-16 w-16 rounded-full bg-rose-100 flex items-center justify-center">
             <span className="text-2xl">🌸</span>
           </div>
           <div className="flex-1">
-            <p className="text-lg font-semibold text-gray-800">时尚达人</p>
+            <p className="text-lg font-semibold text-gray-800">{displayName}</p>
             <p className="text-xs text-gray-400 mt-0.5">查看并编辑个人资料</p>
           </div>
           <ChevronRight className="h-4 w-4 text-gray-300" />
-        </div>
+        </Link>
 
-        {/* 数据统计 */}
         <div className="grid grid-cols-3 gap-4 mb-8">
           {[
-            { label: "衣物", value: "0" },
-            { label: "搭配", value: "0" },
-            { label: "点赞", value: "0" },
+            { label: "衣物", value: String(stats.clothing_count) },
+            { label: "搭配", value: String(stats.look_count) },
+            { label: "点赞", value: String(stats.total_likes) },
           ].map((stat) => (
             <div
               key={stat.label}
@@ -47,7 +97,6 @@ export default function ProfilePage() {
 
         <Separator />
 
-        {/* 菜单列表 */}
         <div className="mt-2">
           {menuItems.map((item) => (
             <Link
@@ -56,19 +105,17 @@ export default function ProfilePage() {
               className="flex items-center gap-3 py-3.5 border-b border-gray-50 last:border-b-0"
             >
               <item.icon className="h-4 w-4 text-gray-400" />
-              <span className="text-sm text-gray-600 flex-1">
-                {item.label}
-              </span>
+              <span className="text-sm text-gray-600 flex-1">{item.label}</span>
               <ChevronRight className="h-4 w-4 text-gray-300" />
             </Link>
           ))}
         </div>
 
-        {/* 退出登录 */}
         <div className="mt-8 text-center">
           <Button
             variant="ghost"
             className="text-xs text-gray-400 hover:text-gray-500"
+            onClick={handleLogout}
           >
             退出登录
           </Button>

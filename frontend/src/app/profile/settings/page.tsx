@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { TopBar } from "@/components/layout/TopBar";
 import { Input } from "@/components/ui/input";
@@ -8,16 +8,42 @@ import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
 import { toast } from "sonner";
+import { api } from "@/lib/api";
+
+interface ProfileData {
+  nickname: string | null;
+  city: string | null;
+}
 
 export default function SettingsPage() {
   const router = useRouter();
   const [nickname, setNickname] = useState("");
   const [city, setCity] = useState("");
+  const [isLoading, setIsLoading] = useState(true);
+
+  useEffect(() => {
+    api.get("api/users/me").json<ProfileData>().then((data) => {
+      setNickname(data.nickname || "");
+      setCity(data.city || "");
+    }).catch(() => {}).finally(() => setIsLoading(false));
+  }, []);
 
   async function handleSave() {
-    // TODO: 对接后端 API 保存用户信息
-    toast.success("保存成功");
-    router.back();
+    try {
+      await api.patch("api/users/me", { json: { nickname: nickname || null, city: city || null } });
+      toast.success("保存成功");
+      router.back();
+    } catch {
+      toast.error("保存失败");
+    }
+  }
+
+  if (isLoading) {
+    return (
+      <div className="mx-auto max-w-lg min-h-screen bg-white flex items-center justify-center">
+        <p className="text-sm text-gray-400">加载中...</p>
+      </div>
+    );
   }
 
   return (
