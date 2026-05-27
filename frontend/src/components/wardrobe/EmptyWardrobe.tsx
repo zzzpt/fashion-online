@@ -1,7 +1,11 @@
 import { Shirt } from "lucide-react";
 import { UploadButton } from "./UploadButton";
 
-export function EmptyWardrobe() {
+interface EmptyWardrobeProps {
+  onUpload?: (file: File) => Promise<void>;
+}
+
+export function EmptyWardrobe({ onUpload }: EmptyWardrobeProps) {
   return (
     <div className="flex flex-col items-center justify-center py-20">
       <div className="h-20 w-20 rounded-full bg-rose-50 flex items-center justify-center mb-4">
@@ -11,7 +15,7 @@ export function EmptyWardrobe() {
       <p className="text-xs text-gray-400 mt-1 mb-6">
         拍照上传你的第一件衣服吧
       </p>
-      <UploadButton />
+      <UploadButton onUpload={onUpload} />
     </div>
   );
 }

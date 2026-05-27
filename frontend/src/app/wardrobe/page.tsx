@@ -8,7 +8,7 @@ import { ClothingGrid } from "@/components/wardrobe/ClothingGrid";
 import { EmptyWardrobe } from "@/components/wardrobe/EmptyWardrobe";
 import { UploadButton } from "@/components/wardrobe/UploadButton";
 import { LoadingSpinner } from "@/components/shared/LoadingSpinner";
-import { api } from "@/lib/api";
+import { api, uploadFile } from "@/lib/api";
 import { toast } from "sonner";
 import { useWardrobeStore, type ClothingCategory } from "@/stores/wardrobeStore";
 
@@ -86,7 +86,14 @@ export default function WardrobePage() {
   }, [fetchItems]);
 
   async function handleUpload(file: File) {
-    toast.info("上传功能需要配置 Supabase Storage");
+    try {
+      const result = await uploadFile("api/clothing/upload", file);
+      const raw = result as WardrobeItem;
+      useWardrobeStore.getState().addItem(mapItem(raw));
+      toast.success("上传成功，AI 已自动识别");
+    } catch {
+      toast.error("上传失败");
+    }
   }
 
   const displayedItems = activeCategory === "all"
@@ -112,7 +119,7 @@ export default function WardrobePage() {
         {isLoading ? (
           <LoadingSpinner />
         ) : displayedItems.length === 0 ? (
-          <EmptyWardrobe />
+          <EmptyWardrobe onUpload={handleUpload} />
         ) : (
           <ClothingGrid items={displayedItems} />
         )}

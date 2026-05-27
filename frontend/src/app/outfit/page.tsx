@@ -23,9 +23,11 @@ export default function OutfitPage() {
               <p className="text-sm text-gray-500 mt-1">
                 AI 根据天气和你的衣柜智能推荐搭配
               </p>
+              <Link href="/outfit/recommend">
               <Button size="sm" className="mt-3 bg-rose-400 hover:bg-rose-500">
                 查看推荐
               </Button>
+            </Link>
             </div>
           </div>
 
