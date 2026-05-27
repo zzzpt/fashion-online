@@ -2,14 +2,16 @@
 
 import { ArrowLeft } from "lucide-react";
 import { useRouter } from "next/navigation";
+import { SearchBar } from "./SearchBar";
 
 interface TopBarProps {
   title: string;
   showBack?: boolean;
+  showSearch?: boolean;
   rightAction?: React.ReactNode;
 }
 
-export function TopBar({ title, showBack, rightAction }: TopBarProps) {
+export function TopBar({ title, showBack, showSearch = true, rightAction }: TopBarProps) {
   const router = useRouter();
 
   return (
@@ -29,9 +31,10 @@ export function TopBar({ title, showBack, rightAction }: TopBarProps) {
             {title}
           </h1>
         </div>
-        {rightAction && (
-          <div className="flex items-center">{rightAction}</div>
-        )}
+        <div className="flex items-center gap-1">
+          {showSearch && <SearchBar />}
+          {rightAction}
+        </div>
       </div>
     </header>
   );
