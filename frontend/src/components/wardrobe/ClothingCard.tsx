@@ -3,6 +3,7 @@
 import Image from "next/image";
 import Link from "next/link";
 import { Shirt } from "lucide-react";
+import { API_BASE } from "@/lib/api";
 
 interface ClothingCardProps {
   id: string;
@@ -10,6 +11,13 @@ interface ClothingCardProps {
   category: string;
   isFavorite?: boolean;
   categoryLabel: string;
+}
+
+function imgSrc(path: string) {
+  if (!path) return "";
+  if (path.startsWith("http")) return path;
+  if (path.startsWith("data:")) return path;
+  return `${API_BASE}${path}`;
 }
 
 export function ClothingCard({
@@ -24,11 +32,12 @@ export function ClothingCard({
       <div className="aspect-[3/4] rounded-xl bg-gray-100 overflow-hidden relative">
         {imageUrl ? (
           <Image
-            src={imageUrl}
+            src={imgSrc(imageUrl)}
             alt={category}
             fill
             className="object-cover group-hover:scale-105 transition-transform"
             sizes="(max-width: 480px) 33vw, 160px"
+            unoptimized
           />
         ) : (
           <div className="flex items-center justify-center h-full">

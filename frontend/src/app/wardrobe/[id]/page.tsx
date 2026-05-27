@@ -6,7 +6,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { ArrowLeft, Heart, Edit3, Trash2 } from "lucide-react";
 import { Separator } from "@/components/ui/separator";
-import { api } from "@/lib/api";
+import { api, API_BASE } from "@/lib/api";
 import { toast } from "sonner";
 
 const categoryLabelMap: Record<string, string> = {
@@ -74,6 +74,12 @@ export default function ClothingDetailPage() {
     }
   }
 
+  function imgSrc(path: string | undefined) {
+    if (!path) return "";
+    if (path.startsWith("http")) return path;
+    return `${API_BASE}${path}`;
+  }
+
   if (isLoading) {
     return (
       <div className="mx-auto max-w-lg bg-white min-h-screen flex items-center justify-center">
@@ -123,11 +129,12 @@ export default function ClothingDetailPage() {
       <div className="px-4 pt-4 space-y-4">
         <div className="aspect-[3/4] rounded-2xl bg-gray-100 overflow-hidden relative">
           <Image
-            src={item.image_url}
+            src={imgSrc(item.image_url)}
             alt={item.category}
             fill
             className="object-cover"
             sizes="(max-width: 480px) 100vw, 480px"
+            unoptimized
           />
         </div>
 

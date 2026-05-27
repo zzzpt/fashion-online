@@ -11,20 +11,21 @@ class Settings(BaseSettings):
     # Database
     database_url: str = ""
 
-    # OpenAI
-    openai_api_key: str = ""
+    # DeepSeek (OpenAI 兼容)
+    deepseek_api_key: str = ""
+    deepseek_model: str = "deepseek-chat"
 
-    # remove.bg
+    # remove.bg（可选，rembg 本地替代）
     removebg_api_key: str = ""
 
-    # AI 图片生成
+    # AI 图片生成（可选）
     fal_api_key: str = ""
     replicate_api_key: str = ""
 
-    # 天气 API
+    # 天气 API（可选，Open-Meteo 免费替代）
     weather_api_key: str = ""
 
-    # Redis
+    # Redis（可选）
     redis_url: str = ""
 
     # App

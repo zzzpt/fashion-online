@@ -6,7 +6,7 @@ from fastapi import UploadFile, File, Form
 from app.api.schemas import ClothingCreate, ClothingUpdate
 from app.core.security import get_current_user
 from app.db.session import get_store
-from app.services import clothing_service, storage_service, ai_service
+from app.services import clothing_service, storage_service, ai_service, bg_service
 
 router = APIRouter(prefix="/api/clothing", tags=["clothing"])
 
@@ -22,11 +22,13 @@ async def upload_clothing(
     ext = file.filename.rsplit(".", 1)[-1] if file.filename and "." in file.filename else "jpg"
     url_path = storage_service.save_bytes(contents, user["id"], f".{ext}")
 
-    # Mock AI 分析
+    # AI 分析 + 抠图（并行）
     ai_result = ai_service.analyze_clothing(url_path)
+    no_bg_url = bg_service.remove_background(url_path, user["id"])
 
     item = clothing_service.upload_clothing(
         store, user["id"], url_path, ai_result["category"],
+        image_no_bg_url=no_bg_url,
         sub_category=ai_result.get("sub_category"),
         color=ai_result.get("color"),
         color_palette=ai_result.get("color_palette", []),

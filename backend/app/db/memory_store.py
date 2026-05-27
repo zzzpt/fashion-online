@@ -51,7 +51,7 @@ class MemoryStore:
             "id": uuid.uuid4().hex,
             "user_id": user_id,
             "image_url": image_url,
-            "image_no_bg_url": None,
+            "image_no_bg_url": fields.get("image_no_bg_url"),
             "category": fields.get("category", "top"),
             "sub_category": fields.get("sub_category"),
             "color": fields.get("color"),

@@ -5,7 +5,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { TopBar } from "@/components/layout/TopBar";
 import { LoadingSpinner } from "@/components/shared/LoadingSpinner";
-import { api } from "@/lib/api";
+import { api, API_BASE } from "@/lib/api";
 import { Sparkles, RefreshCw } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
@@ -50,6 +50,10 @@ export default function AIRecommendPage() {
   useEffect(() => {
     fetchRec();
   }, [fetchRec]);
+
+  function imgUrl(path: string) {
+    return path.startsWith("http") ? path : `${API_BASE}${path}`;
+  }
 
   return (
     <div className="mx-auto max-w-lg min-h-screen">
@@ -103,7 +107,7 @@ export default function AIRecommendPage() {
                   >
                     <div className="aspect-[3/4] rounded-xl bg-gray-100 overflow-hidden relative">
                       <Image
-                        src={`http://localhost:8000${item.image_url}`}
+                        src={imgUrl(item.image_url)}
                         alt={item.category}
                         fill
                         className="object-cover group-hover:scale-105 transition-transform"
