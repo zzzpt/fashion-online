@@ -26,7 +26,7 @@ async def upload_clothing(
     ai_result = ai_service.analyze_clothing(url_path)
 
     item = clothing_service.upload_clothing(
-        store, uuid.UUID(user["id"]), url_path, ai_result["category"],
+        store, user["id"], url_path, ai_result["category"],
         sub_category=ai_result.get("sub_category"),
         color=ai_result.get("color"),
         color_palette=ai_result.get("color_palette", []),
@@ -47,7 +47,7 @@ async def list_clothing(
     store=Depends(get_store),
 ):
     return clothing_service.list_clothing(
-        store, uuid.UUID(user["id"]),
+        store, user["id"],
         category=category, offset=offset, limit=limit,
     )
 

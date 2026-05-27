@@ -18,7 +18,7 @@ async def create_look(
 ):
     fields = body.model_dump(exclude={"items"})
     items_data = [it.model_dump() for it in body.items] if body.items else None
-    return look_service.create_look(store, uuid.UUID(user["id"]), items=items_data, **fields)
+    return look_service.create_look(store, user["id"], items=items_data, **fields)
 
 
 @router.get("")
@@ -28,7 +28,7 @@ async def list_looks(
     user: dict = Depends(get_current_user),
     store=Depends(get_store),
 ):
-    return look_service.list_looks(store, uuid.UUID(user["id"]), offset=offset, limit=limit)
+    return look_service.list_looks(store, user["id"], offset=offset, limit=limit)
 
 
 @router.get("/{look_id}")

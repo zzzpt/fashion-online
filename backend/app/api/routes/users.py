@@ -16,7 +16,7 @@ async def get_profile(
     user: dict = Depends(get_current_user),
     store=Depends(get_store),
 ):
-    return user_service.get_or_create_profile(store, uuid.UUID(user["id"]))
+    return user_service.get_or_create_profile(store, user["id"])
 
 
 @router.patch("/me")
@@ -28,7 +28,7 @@ async def update_profile(
     fields = body.model_dump(exclude_none=True)
     if not fields:
         raise HTTPException(status_code=400, detail="没有要更新的字段")
-    profile = user_service.update_profile(store, uuid.UUID(user["id"]), **fields)
+    profile = user_service.update_profile(store, user["id"], **fields)
     if not profile:
         raise HTTPException(status_code=404, detail="用户不存在")
     return profile
@@ -39,4 +39,4 @@ async def get_stats(
     user: dict = Depends(get_current_user),
     store=Depends(get_store),
 ):
-    return user_service.get_stats(store, uuid.UUID(user["id"]))
+    return user_service.get_stats(store, user["id"])

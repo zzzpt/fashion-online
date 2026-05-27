@@ -17,7 +17,7 @@ async def daily_recommend(
     user: dict = Depends(get_current_user),
     store=Depends(get_store),
 ):
-    items = store.list_clothing(str(uuid.UUID(user["id"])), limit=200)
+    items = store.list_clothing(str(user["id"]), limit=200)
     return ai_service.generate_daily_recommendation(items, MOCK_WEATHER)
 
 
@@ -26,5 +26,5 @@ async def inspiration(
     user: dict = Depends(get_current_user),
     store=Depends(get_store),
 ):
-    items = store.list_clothing(str(uuid.UUID(user["id"])), limit=200)
+    items = store.list_clothing(str(user["id"]), limit=200)
     return ai_service.generate_inspiration(items)
