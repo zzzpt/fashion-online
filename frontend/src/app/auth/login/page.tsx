@@ -13,24 +13,22 @@ import { getSupabase } from "@/lib/supabase";
 
 export default function LoginPage() {
   const router = useRouter();
-  const [phone, setPhone] = useState("");
+  const [email, setEmail] = useState("");
   const [code, setCode] = useState("");
   const [codeSent, setCodeSent] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
 
   async function handleSendCode() {
-    if (!phone || phone.length < 11) {
-      toast.error("请输入正确的手机号");
+    if (!email || !email.includes("@")) {
+      toast.error("请输入正确的邮箱地址");
       return;
     }
     setIsLoading(true);
-    const { error } = await getSupabase().auth.signInWithOtp({
-      phone: `+86${phone}`,
-    });
+    const { error } = await getSupabase().auth.signInWithOtp({ email });
     if (error) {
       toast.error(error.message);
     } else {
-      toast.success("验证码已发送");
+      toast.success("验证码已发送到邮箱");
       setCodeSent(true);
     }
     setIsLoading(false);
@@ -40,9 +38,9 @@ export default function LoginPage() {
     e.preventDefault();
     setIsLoading(true);
     const { error } = await getSupabase().auth.verifyOtp({
-      phone: `+86${phone}`,
+      email,
       token: code,
-      type: "sms",
+      type: "email",
     });
     if (error) {
       toast.error(error.message);
@@ -67,21 +65,20 @@ export default function LoginPage() {
       <div className="px-6 pt-8">
         <h1 className="text-2xl font-bold text-gray-800">欢迎回来</h1>
         <p className="text-sm text-gray-400 mt-2">
-          使用手机号登录你的数字衣柜
+          使用邮箱登录你的数字衣柜
         </p>
 
         <form onSubmit={handleLogin} className="mt-10 space-y-5">
           <div className="space-y-2">
-            <Label htmlFor="phone" className="text-xs text-gray-500">
-              手机号
+            <Label htmlFor="email" className="text-xs text-gray-500">
+              邮箱
             </Label>
             <Input
-              id="phone"
-              type="tel"
-              placeholder="请输入手机号"
-              value={phone}
-              onChange={(e) => setPhone(e.target.value)}
-              maxLength={11}
+              id="email"
+              type="email"
+              placeholder="请输入邮箱地址"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
               className="h-11 rounded-xl"
             />
           </div>

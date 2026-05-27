@@ -13,25 +13,23 @@ import { getSupabase } from "@/lib/supabase";
 
 export default function RegisterPage() {
   const router = useRouter();
-  const [phone, setPhone] = useState("");
+  const [email, setEmail] = useState("");
   const [code, setCode] = useState("");
   const [nickname, setNickname] = useState("");
   const [codeSent, setCodeSent] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
 
   async function handleSendCode() {
-    if (!phone || phone.length < 11) {
-      toast.error("请输入正确的手机号");
+    if (!email || !email.includes("@")) {
+      toast.error("请输入正确的邮箱地址");
       return;
     }
     setIsLoading(true);
-    const { error } = await getSupabase().auth.signInWithOtp({
-      phone: `+86${phone}`,
-    });
+    const { error } = await getSupabase().auth.signInWithOtp({ email });
     if (error) {
       toast.error(error.message);
     } else {
-      toast.success("验证码已发送");
+      toast.success("验证码已发送到邮箱");
       setCodeSent(true);
     }
     setIsLoading(false);
@@ -45,16 +43,15 @@ export default function RegisterPage() {
     }
     setIsLoading(true);
     const { error } = await getSupabase().auth.verifyOtp({
-      phone: `+86${phone}`,
+      email,
       token: code,
-      type: "sms",
+      type: "email",
     });
     if (error) {
       toast.error(error.message);
       setIsLoading(false);
       return;
     }
-    // 更新用户昵称到 Supabase user_metadata
     await getSupabase().auth.updateUser({ data: { nickname } });
     toast.success("注册成功");
     router.push("/");
@@ -95,16 +92,15 @@ export default function RegisterPage() {
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="phone" className="text-xs text-gray-500">
-              手机号
+            <Label htmlFor="email" className="text-xs text-gray-500">
+              邮箱
             </Label>
             <Input
-              id="phone"
-              type="tel"
-              placeholder="请输入手机号"
-              value={phone}
-              onChange={(e) => setPhone(e.target.value)}
-              maxLength={11}
+              id="email"
+              type="email"
+              placeholder="请输入邮箱地址"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
               className="h-11 rounded-xl"
             />
           </div>
