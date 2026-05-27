@@ -41,13 +41,14 @@ def get_db():
 
 
 def get_store():
-    """FastAPI 依赖：获取数据存储（数据库会话或内存存储）。"""
+    """FastAPI 依赖：获取数据存储（数据库会话包装为适配器，或内存存储）。"""
     engine = _get_engine()
     if engine is None:
         yield memory_store
         return
     db = _get_session_local()()
     try:
-        yield db
+        from app.db.adapter import DbAdapter
+        yield DbAdapter(db)
     finally:
         db.close()
