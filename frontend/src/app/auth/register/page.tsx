@@ -1,8 +1,8 @@
 "use client";
 
-import { useState } from "react";
+import { Suspense, useEffect, useState } from "react";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { ArrowLeft } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -11,13 +11,52 @@ import { Separator } from "@/components/ui/separator";
 import { toast } from "sonner";
 import { getSupabase } from "@/lib/supabase";
 
-export default function RegisterPage() {
+function RegisterForm() {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const [email, setEmail] = useState("");
   const [code, setCode] = useState("");
   const [nickname, setNickname] = useState("");
   const [codeSent, setCodeSent] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
+
+  // 处理 magic link 回调：URL 带 token_hash 时自动验证
+  useEffect(() => {
+    const tokenHash = searchParams.get("token_hash");
+    const type = searchParams.get("type");
+    if (tokenHash && type === "email") {
+      const saved = sessionStorage.getItem("registerData");
+      if (saved) {
+        const { email: savedEmail, nickname: savedNickname } = JSON.parse(saved);
+        handleVerifyAndUpdate(savedEmail, tokenHash, savedNickname);
+      }
+    }
+  }, [searchParams]);
+
+  async function handleVerifyAndUpdate(
+    savedEmail: string,
+    tokenHash: string,
+    savedNickname: string,
+  ) {
+    setIsLoading(true);
+    const { error } = await getSupabase().auth.verifyOtp({
+      email: savedEmail,
+      token_hash: tokenHash,
+      type: "email",
+    });
+    if (error) {
+      toast.error(error.message);
+      setIsLoading(false);
+      return;
+    }
+    if (savedNickname) {
+      await getSupabase().auth.updateUser({ data: { nickname: savedNickname } });
+    }
+    sessionStorage.removeItem("registerData");
+    toast.success("注册成功");
+    router.push("/");
+    setIsLoading(false);
+  }
 
   async function handleSendCode() {
     if (!email || !email.includes("@")) {
@@ -25,11 +64,19 @@ export default function RegisterPage() {
       return;
     }
     setIsLoading(true);
-    const { error } = await getSupabase().auth.signInWithOtp({ email });
+    sessionStorage.setItem(
+      "registerData",
+      JSON.stringify({ email, nickname }),
+    );
+
+    const { error } = await getSupabase().auth.signInWithOtp({
+      email,
+      options: { emailRedirectTo: `${location.origin}/auth/register` },
+    });
     if (error) {
       toast.error(error.message);
     } else {
-      toast.success("验证码已发送到邮箱");
+      toast.success("验证码已发送，请检查邮箱");
       setCodeSent(true);
     }
     setIsLoading(false);
@@ -53,6 +100,7 @@ export default function RegisterPage() {
       return;
     }
     await getSupabase().auth.updateUser({ data: { nickname } });
+    sessionStorage.removeItem("registerData");
     toast.success("注册成功");
     router.push("/");
     setIsLoading(false);
@@ -155,5 +203,13 @@ export default function RegisterPage() {
         </p>
       </div>
     </div>
+  );
+}
+
+export default function RegisterPage() {
+  return (
+    <Suspense>
+      <RegisterForm />
+    </Suspense>
   );
 }

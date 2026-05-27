@@ -1,8 +1,8 @@
 "use client";
 
-import { useState } from "react";
+import { Suspense, useEffect, useState } from "react";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { ArrowLeft } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -11,12 +11,41 @@ import { Separator } from "@/components/ui/separator";
 import { toast } from "sonner";
 import { getSupabase } from "@/lib/supabase";
 
-export default function LoginPage() {
+function LoginForm() {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const [email, setEmail] = useState("");
   const [code, setCode] = useState("");
   const [codeSent, setCodeSent] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
+
+  useEffect(() => {
+    const tokenHash = searchParams.get("token_hash");
+    const type = searchParams.get("type");
+    if (tokenHash && type === "email") {
+      const saved = sessionStorage.getItem("loginEmail");
+      if (saved) {
+        handleVerifyToken(saved, tokenHash);
+      }
+    }
+  }, [searchParams]);
+
+  async function handleVerifyToken(savedEmail: string, tokenHash: string) {
+    setIsLoading(true);
+    const { error } = await getSupabase().auth.verifyOtp({
+      email: savedEmail,
+      token_hash: tokenHash,
+      type: "email",
+    });
+    if (error) {
+      toast.error(error.message);
+    } else {
+      sessionStorage.removeItem("loginEmail");
+      toast.success("登录成功");
+      router.push("/");
+    }
+    setIsLoading(false);
+  }
 
   async function handleSendCode() {
     if (!email || !email.includes("@")) {
@@ -24,11 +53,16 @@ export default function LoginPage() {
       return;
     }
     setIsLoading(true);
-    const { error } = await getSupabase().auth.signInWithOtp({ email });
+    sessionStorage.setItem("loginEmail", email);
+
+    const { error } = await getSupabase().auth.signInWithOtp({
+      email,
+      options: { emailRedirectTo: `${location.origin}/auth/login` },
+    });
     if (error) {
       toast.error(error.message);
     } else {
-      toast.success("验证码已发送到邮箱");
+      toast.success("验证码已发送，请检查邮箱");
       setCodeSent(true);
     }
     setIsLoading(false);
@@ -45,6 +79,7 @@ export default function LoginPage() {
     if (error) {
       toast.error(error.message);
     } else {
+      sessionStorage.removeItem("loginEmail");
       toast.success("登录成功");
       router.push("/");
     }
@@ -133,5 +168,13 @@ export default function LoginPage() {
         </p>
       </div>
     </div>
+  );
+}
+
+export default function LoginPage() {
+  return (
+    <Suspense>
+      <LoginForm />
+    </Suspense>
   );
 }
