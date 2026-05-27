@@ -9,6 +9,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Separator } from "@/components/ui/separator";
 import { toast } from "sonner";
+import { getSupabase } from "@/lib/supabase";
 
 export default function LoginPage() {
   const router = useRouter();
@@ -23,18 +24,32 @@ export default function LoginPage() {
       return;
     }
     setIsLoading(true);
-    // TODO: 对接 Supabase Auth 发送验证码
-    toast.success("验证码已发送");
-    setCodeSent(true);
+    const { error } = await getSupabase().auth.signInWithOtp({
+      phone: `+86${phone}`,
+    });
+    if (error) {
+      toast.error(error.message);
+    } else {
+      toast.success("验证码已发送");
+      setCodeSent(true);
+    }
     setIsLoading(false);
   }
 
   async function handleLogin(e: React.FormEvent) {
     e.preventDefault();
     setIsLoading(true);
-    // TODO: 对接 Supabase Auth 验证码登录
-    toast.success("登录成功");
-    router.push("/");
+    const { error } = await getSupabase().auth.verifyOtp({
+      phone: `+86${phone}`,
+      token: code,
+      type: "sms",
+    });
+    if (error) {
+      toast.error(error.message);
+    } else {
+      toast.success("登录成功");
+      router.push("/");
+    }
     setIsLoading(false);
   }
 

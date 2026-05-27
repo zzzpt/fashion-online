@@ -9,6 +9,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Separator } from "@/components/ui/separator";
 import { toast } from "sonner";
+import { getSupabase } from "@/lib/supabase";
 
 export default function RegisterPage() {
   const router = useRouter();
@@ -24,9 +25,15 @@ export default function RegisterPage() {
       return;
     }
     setIsLoading(true);
-    // TODO: 对接 Supabase Auth 发送验证码
-    toast.success("验证码已发送");
-    setCodeSent(true);
+    const { error } = await getSupabase().auth.signInWithOtp({
+      phone: `+86${phone}`,
+    });
+    if (error) {
+      toast.error(error.message);
+    } else {
+      toast.success("验证码已发送");
+      setCodeSent(true);
+    }
     setIsLoading(false);
   }
 
@@ -37,7 +44,18 @@ export default function RegisterPage() {
       return;
     }
     setIsLoading(true);
-    // TODO: 对接 Supabase Auth 注册
+    const { error } = await getSupabase().auth.verifyOtp({
+      phone: `+86${phone}`,
+      token: code,
+      type: "sms",
+    });
+    if (error) {
+      toast.error(error.message);
+      setIsLoading(false);
+      return;
+    }
+    // 更新用户昵称到 Supabase user_metadata
+    await getSupabase().auth.updateUser({ data: { nickname } });
     toast.success("注册成功");
     router.push("/");
     setIsLoading(false);
